@@ -9,5 +9,5 @@ data/
         - [unzipped playlist data]
     - song/
         - song_dataset_1M_original.csv
-        - song_dataset.csv  # Created by /scripts/data_scripts/create_song_dataset.ipynb
+        - song_dataset.db  # Created by /scripts/data_scripts/create_song_dataset.py
 ```

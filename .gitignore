@@ -1,6 +1,7 @@
 # --- OUR GITIGNORE FILES SPECIFIC --------------
 
 data/
+.env
 
 
 # --- TEMPLATE GITIGNORE ------------------------
