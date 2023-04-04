@@ -15,6 +15,7 @@ import json
 import sqlite3
 from tqdm import tqdm
 import os
+import time
 
 # --- Parameters ---------------------------------------------------------------------------------------
 
@@ -40,6 +41,40 @@ FEATURE_NAMES = [
     "valence"
 ]
 
+TITLE_COLUMN_NAMES = \
+    ["title"] + \
+    [feature+"_mean" for feature in FEATURE_NAMES] + \
+    [feature+"_sd" for feature in FEATURE_NAMES]
+
+TITLE_SCHEMA =  \
+"""CREATE TABLE titles(
+    title                   TEXT        NOT NULL,
+    acousticness_mean       REAL        NOT NULL,
+    acousticness_sd         REAL        NOT NULL,
+    danceability_mean       REAL        NOT NULL,
+    danceability_sd         REAL        NOT NULL,
+    duration_ms_mean        REAL        NOT NULL,
+    duration_ms_sd          REAL        NOT NULL,
+    energy_mean             REAL        NOT NULL,
+    energy_sd               REAL        NOT NULL,
+    instrumentalness_mean   REAL        NOT NULL,
+    instrumentalness_sd     REAL        NOT NULL,
+    liveness_mean           REAL        NOT NULL,
+    liveness_sd             REAL        NOT NULL,
+    loudness_mean           REAL        NOT NULL,
+    loudness_sd             REAL        NOT NULL,
+    mode_mean               REAL        NOT NULL,
+    mode_sd                 REAL        NOT NULL,
+    speechiness_mean        REAL        NOT NULL,
+    speechiness_sd          REAL        NOT NULL,
+    tempo_mean              REAL        NOT NULL,
+    tempo_sd                REAL        NOT NULL,
+    time_signature_mean     REAL        NOT NULL,
+    time_signature_sd       REAL        NOT NULL,
+    valence_mean            REAL        NOT NULL,
+    valence_sd              REAL        NOT NULL
+)"""
+
 # --- Functions ----------------------------------------------------------------------------------------
 
 def table_exists(connection: sqlite3.Connection, name: str):
@@ -54,34 +89,7 @@ def initialize_db(connection: sqlite3.Connection):
     """Initialize the title database."""
     cursor = connection.cursor()
 
-    cursor.execute("""
-    CREATE TABLE titles(
-        title                   TEXT        NOT NULL,
-        acousticness_mean       REAL        NOT NULL,
-        acousticness_sd         REAL        NOT NULL,
-        danceability_mean       REAL        NOT NULL,
-        danceability_sd         REAL        NOT NULL,
-        duration_ms_mean        REAL        NOT NULL,
-        duration_ms_sd          REAL        NOT NULL,
-        energy_mean             REAL        NOT NULL,
-        energy_sd               REAL        NOT NULL,
-        instrumentalness_mean   REAL        NOT NULL,
-        instrumentalness_sd     REAL        NOT NULL,
-        liveness_mean           REAL        NOT NULL,
-        liveness_sd             REAL        NOT NULL,
-        loudness_mean           REAL        NOT NULL,
-        loudness_sd             REAL        NOT NULL,
-        mode_mean               REAL        NOT NULL,
-        mode_sd                 REAL        NOT NULL,
-        speechiness_mean        REAL        NOT NULL,
-        speechiness_sd          REAL        NOT NULL,
-        tempo_mean              REAL        NOT NULL,
-        tempo_sd                REAL        NOT NULL,
-        time_signature_mean     REAL        NOT NULL,
-        time_signature_sd       REAL        NOT NULL,
-        valence_mean            REAL        NOT NULL,
-        valence_sd              REAL        NOT NULL
-    )""")
+    cursor.execute(TITLE_SCHEMA)
 
 
 def id_from_uri(uri: str):
@@ -92,11 +100,9 @@ def id_from_uri(uri: str):
     return uri.split(':')[2]
 
 
-def process_playlist(playlist: dict, title_conn: sqlite3.Connection,
-                     song_conn: sqlite3.Connection):
+def process_playlist(playlist: dict, song_conn: sqlite3.Connection):
     """Process a single playlist from its JSON dictionary."""
     ids = [id_from_uri(track['track_uri']) for track in playlist['tracks']]
-    song_cursor = song_conn.cursor()
 
     # Queries for all the given songs. 
     # The interpolated bit expands to (?,?,?,?,...,?) for as many ids as we have,
@@ -106,12 +112,13 @@ def process_playlist(playlist: dict, title_conn: sqlite3.Connection,
         song_conn,
         params=ids,
     )
+
     means = songs[FEATURE_NAMES].mean(axis=0).add_suffix("_mean")
     sds = songs[FEATURE_NAMES].std(axis=0).add_suffix("_sd")
 
     playlist_df = pd.concat((means, sds), axis=0)
     playlist_df['title'] = playlist['name']
-    playlist_df.to_frame().T.to_sql('titles', title_conn, if_exists='append', index=False)
+    return playlist_df
     
 
 def process_playlist_slice(slice_file_name: str, title_conn: sqlite3.Connection, 
@@ -123,9 +130,16 @@ def process_playlist_slice(slice_file_name: str, title_conn: sqlite3.Connection,
     with open(slice_file_path, 'r') as fd:
         slice_json = json.load(fd)
 
+    overall_df = pd.DataFrame(columns=TITLE_COLUMN_NAMES)
     for playlist in slice_json['playlists']:
-        process_playlist(playlist, title_conn, song_conn)
+        playlist_row = process_playlist(playlist, song_conn)
+        overall_df = pd.concat((overall_df, playlist_row.to_frame().T))
         pbar.update(1)
+        
+    before = time.time()
+    # overall_df.to_sql('titles', title_conn, if_exists='append', index=False, method='multi')
+    overall_df.to_sql('titles', title_conn, if_exists='append', index=False)
+    print(f"Bulk SQL insert for slice: {time.time() - before}")
 
 
 # --- MAIN ------------------------------------------------------------------------------------
