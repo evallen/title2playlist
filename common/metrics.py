@@ -1,5 +1,4 @@
 from sklearn.metrics import dcg_score
-from typing import List
 import numpy as np
 import time
 
