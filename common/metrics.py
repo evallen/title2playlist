@@ -3,8 +3,35 @@ import numpy as np
 import time
 
 
-def evaluate_rankings(playlist, ranked_songs):
-    """Evaluates a ranked set of songs against a playlist.
+def first_index(playlist, ranked_songs):
+    """Finds the first index of a song from the real playlist
+    in the ranked songs list.
+
+    Params:
+    - playlist: A list of song IDs representing songs in a real playlist.
+    - ranked_songs: An (ordered) list of IDs representing songs returned
+                    by our algorithm. The most relevant songs are on the top.
+    
+    Returns:
+    - The index of the first song in the ranked list that appears in the 
+      playlist.
+    """
+    first = len(ranked_songs)
+    for song in playlist:
+        try:
+            idx = ranked_songs.index(song)
+            first = min(first, idx)
+        except ValueError:
+            pass
+    
+    if first == len(ranked_songs):
+        first = None
+
+    return first
+
+
+def ndcg(playlist, ranked_songs):
+    """Evaluates a ranked set of songs against a playlist using NDCG.
     
     Params:
     - playlist: A list of song IDs representing songs in a real playlist.
@@ -35,11 +62,17 @@ def evaluate_rankings(playlist, ranked_songs):
 def assert_almost_equal(a, b, delta=0.01):
     assert(a - b < delta)
 
+def test_first_index():
+    assert(first_index(['a', 'b', 'c'], ['e', 'd', 'b', 'c']) == 2)
+    assert(first_index(['a', 'b', 'c'], ['a', 'b', 'c', 'd']) == 0)
+    assert(first_index(['a', 'b', 'c'], ['d']*50 + ['a']) == 50)
+    assert(first_index(['a', 'b', 'c'], ['d']) is None)
+    print('OK')
 
-if __name__ == "__main__":
-    assert_almost_equal(evaluate_rankings(['a', 'b', 'c'], ['b', 'd', 'e', 'c']), 0.671)
-    assert_almost_equal(evaluate_rankings(['a', 'b', 'c'], ['a', 'b', 'c', 'd']), 1.0)
-    assert_almost_equal(evaluate_rankings(['a', 'b', 'c'], ['d', 'a', 'b', 'c']), 0.733)
+def test_ndcg():
+    assert_almost_equal(ndcg(['a', 'b', 'c'], ['b', 'd', 'e', 'c']), 0.671)
+    assert_almost_equal(ndcg(['a', 'b', 'c'], ['a', 'b', 'c', 'd']), 1.0)
+    assert_almost_equal(ndcg(['a', 'b', 'c'], ['d', 'a', 'b', 'c']), 0.733)
     print('OK')
 
     print('Running large benchmark')
@@ -48,9 +81,10 @@ if __name__ == "__main__":
     np.random.shuffle(test_array)
 
     then = time.time()
-    assert_almost_equal(evaluate_rankings(test_array, test_array), 1.0)
+    assert_almost_equal(ndcg(test_array, test_array), 1.0)
     print(f"Time for 24000 entries: {time.time() - then}")
 
 
-
-
+if __name__ == "__main__":
+    test_ndcg()
+    test_first_index()
