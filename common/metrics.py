@@ -3,6 +3,57 @@ import numpy as np
 import time
 
 
+def indexes(playlist, ranked_songs):
+    indexes = []
+    for song in playlist:
+        try:
+            indexes.append(ranked_songs.index(song))
+        except ValueError:
+            pass
+
+    return indexes
+
+
+def num_found(playlist, ranked_songs, k=None):
+    """Finds the number of songs from the actual
+    playlist that are in the ranked songs list, up to
+    element k if provided.
+    
+    Params:
+    - playlist: A list of song IDs representing songs in a real playlist.
+    - ranked_songs: An (ordered) list of IDs representing songs returned
+                    by our algorithm. The most relevant songs are on the top.
+    - k: How many ranked_songs to look through. If None, all of them.
+
+    Returns:
+    - How many real playlist songs are in the ranked songs list
+      up to element k.
+    """
+    if k is None:
+        search_songs = ranked_songs
+    else: 
+        search_songs = ranked_songs[:k]
+
+    return sum([1 if song in search_songs else 0 for song in playlist])
+
+
+def recall_k(playlist, ranked_songs, k):
+    """Recall@k: Finds the percentage of songs from the actual
+    playlist that are in the first k entries of the ranked_songs list.
+
+    Params:
+    - playlist: A list of song IDs representing songs in a real playlist.
+    - ranked_songs: An (ordered) list of IDs representing songs returned
+                    by our algorithm. The most relevant songs are on the top.
+    - k: How many ranked_songs to look through.
+    
+    Returns:
+    - The percentage of songs in the real playlist that are in the
+      ranked songs list up to element k.
+    """
+    return num_found(playlist, ranked_songs, k) / len(playlist)
+
+
 def first_index(playlist, ranked_songs):
     """Finds the first index of a song from the real playlist
     in the ranked songs list.
@@ -62,12 +113,33 @@ def ndcg(playlist, ranked_songs):
 def assert_almost_equal(a, b, delta=0.01):
     assert(a - b < delta)
 
+
+def test_num_found():
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 1), 0)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 2), 0)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 3), 1)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 4), 2)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'a', 'b', 'c'], 4), 3)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'a', 'b', 'c']), 3)
+    print('OK')
+
+
+def test_recall_k():
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 1), 0)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 2), 0)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 3), 0.333)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'd', 'b', 'c'], 4), 0.666)
+    assert_almost_equal(recall_k(['a', 'b', 'c'], ['e', 'a', 'b', 'c'], 4), 1)
+    print('OK')
+
+
 def test_first_index():
     assert(first_index(['a', 'b', 'c'], ['e', 'd', 'b', 'c']) == 2)
     assert(first_index(['a', 'b', 'c'], ['a', 'b', 'c', 'd']) == 0)
     assert(first_index(['a', 'b', 'c'], ['d']*50 + ['a']) == 50)
     assert(first_index(['a', 'b', 'c'], ['d']) is None)
     print('OK')
+
 
 def test_ndcg():
     assert_almost_equal(ndcg(['a', 'b', 'c'], ['b', 'd', 'e', 'c']), 0.671)
@@ -88,3 +160,4 @@ def test_ndcg():
 if __name__ == "__main__":
     test_ndcg()
     test_first_index()
+    test_recall_k()
