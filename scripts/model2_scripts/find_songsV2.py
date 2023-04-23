@@ -18,7 +18,7 @@ def get_songs_from_playlist_slice(connection: sqlite3.Connection, playlistIDs):
     foundSongIDs = [] #List containing the songs found in the playlists
     for playlist in playlistIDs:
         songQuery = f"SELECT songID FROM songs WHERE playlistID = '{playlist}'"
-        desiredSongIDs = pd.read_sql(songQuery, song_conn)
+        desiredSongIDs = pd.read_sql(songQuery, connection)
         [foundSongIDs.append(song) for song in desiredSongIDs.values.flatten().tolist()] #converts from pandas dataframe to a list
     return foundSongIDs
     
@@ -45,7 +45,7 @@ print(len(listOfSongIDs))
 # Now that we have obtained the list of Song IDS from the relevant playlist. We now create a ranked list with the top K song ID's relevant to the playlist. We will be ranking the list in terms of the songs appearance in these playlists.
 
 # %%
-def generate_songs(playlist_ids, num):
+def generate_songs(playlist_ids, num, song_conn):
     ''' Generate <num> songs from a list of playlist IDs '''
     all_songs = get_songs_from_playlist_slice(song_conn, playlist_ids)
     songDict = {}
@@ -60,26 +60,28 @@ def generate_songs(playlist_ids, num):
     rankedsongsList = sorted(rankedsongsList, key=lambda occurence: occurence[1], reverse=True)
     # print(rankedsongsList)
     # Top 10 songs
-    for i in range(num):
-        songQuery = f"SELECT * FROM songs WHERE songID = '{rankedsongsList[i][0]}' LIMIT 1"
-        topSongs = pd.read_sql(songQuery, song_conn)
-        print(f"{i}: {topSongs['songName'].values.squeeze()} by {topSongs['artistName'].values.squeeze()}")
+    # for i in range(num):
+    #     songQuery = f"SELECT * FROM songs WHERE songID = '{rankedsongsList[i][0]}' LIMIT 1"
+    #     topSongs = pd.read_sql(songQuery, song_conn)
+        # print(f"{i}: {topSongs['songName'].values.squeeze()} by {topSongs['artistName'].values.squeeze()} (from {topSongs['playlistName'].values.squeeze()}) ({rankedsongsList[i][1]}) ({rankedsongsList[i][0]})")
+    
+    return [song[0] for song in rankedsongsList[:num]]
     # print(topSongs['songID'].values)
     
 #Code that uses playlist_song.db
 #Forms a connection with the database
-song_conn = sqlite3.Connection("../../data/playlist_song.db")
-songCur = song_conn.cursor()
-#Query for getting playlist IDs TO BE REMOVED
-playlistQuery = "SELECT playlistID FROM songs WHERE LOWER(playlistName) = LOWER('Top Hits')"
-#Gets desired playlist ID's list
-desiredPlaylistsID = pd.read_sql(playlistQuery,song_conn)
-desiredPlaylistsID = desiredPlaylistsID.values.flatten().tolist() #converts from pandas dataframe to a list
-desiredPlaylistsID = list(set(desiredPlaylistsID)) #Gets rid of repeated values
-listOfSongIDs = get_songs_from_playlist_slice(song_conn, desiredPlaylistsID) # Retrieves a list of song ID's from the given playlist IDs
-# listOfSongIDs.extend(listOfSongIDs)
-# print(len(listOfSongIDs))
+# song_conn = sqlite3.Connection("../../data/playlist_song.db")
+# songCur = song_conn.cursor()
+# #Query for getting playlist IDs TO BE REMOVED
+# playlistQuery = "SELECT playlistID FROM songs WHERE LOWER(playlistName) = LOWER('Top Hits')"
+# #Gets desired playlist ID's list
+# desiredPlaylistsID = pd.read_sql(playlistQuery,song_conn)
+# desiredPlaylistsID = desiredPlaylistsID.values.flatten().tolist() #converts from pandas dataframe to a list
+# desiredPlaylistsID = list(set(desiredPlaylistsID)) #Gets rid of repeated values
+# listOfSongIDs = get_songs_from_playlist_slice(song_conn, desiredPlaylistsID) # Retrieves a list of song ID's from the given playlist IDs
+# # listOfSongIDs.extend(listOfSongIDs)
+# # print(len(listOfSongIDs))
 
-generate_songs(desiredPlaylistsID, 10)
+# generate_songs(desiredPlaylistsID, 10)
 
 

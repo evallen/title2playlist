@@ -54,6 +54,42 @@ def recall_k(playlist, ranked_songs, k):
     return num_found(playlist, ranked_songs, k) / len(playlist)
 
 
+def r_precision(playlist_tuples, ranked_songs_tuples):
+    """R-precision: Finds the percentage of songs from the actual
+    playlist that are in the first n entries of the ranked_songs list,
+    where n is the number of songs in the actual playlist. Adds 
+    a bonus for getting the artist right.
+    
+    The formula (from Spotify) is:
+    
+    r_precision = |St & Gt| + 0.25 * |Sa & Ga|
+                  ----------------------------
+                             |Gt|
+    
+    where
+        Gt, Ga are the ground truth track IDs and artist IDs, and 
+        St, Sa are the track IDs and artist IDs in the recommended songs, and
+        & is the set intersection operator.
+        Note that Gt, Ga, St, and Sa must all be the SAME length.
+    
+    Params:
+    - playlist_tuples: A list of tuples (song_id, artist_id) for all the songs in the
+                       real playlist
+    - ranked_songs_tuples: A list of tuples (song_id, artist_id) for all the songs in 
+                           the output playlist
+    
+    Returns:
+    - The r-precision metric.
+    """
+    assert(len(playlist_tuples) == len(ranked_songs_tuples))
+
+    playlist_song_ids, playlist_artist_ids = zip(*playlist_tuples)
+    ranked_song_ids, ranked_artist_ids = zip(*ranked_songs_tuples)
+
+    return recall_k(playlist_song_ids, ranked_song_ids, len(playlist_song_ids)) + \
+           0.25 * recall_k(playlist_artist_ids, ranked_artist_ids, len(playlist_artist_ids))
+
+
 def first_index(playlist, ranked_songs):
     """Finds the first index of a song from the real playlist
     in the ranked songs list.
@@ -133,6 +169,13 @@ def test_recall_k():
     print('OK')
 
 
+def test_r_precision():
+    assert_almost_equal(r_precision([('a', 'A'), ('b', 'B'), ('c', 'C')], 
+                                    [('a', 'A'), ('e', 'B'), ('f', 'F')]),
+                                    0.5)
+    print('OK')
+
+
 def test_first_index():
     assert(first_index(['a', 'b', 'c'], ['e', 'd', 'b', 'c']) == 2)
     assert(first_index(['a', 'b', 'c'], ['a', 'b', 'c', 'd']) == 0)
@@ -161,3 +204,4 @@ if __name__ == "__main__":
     test_ndcg()
     test_first_index()
     test_recall_k()
+    test_r_precision()
