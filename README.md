@@ -50,9 +50,11 @@ Link: [here](https://drive.google.com/drive/folders/1HyYqdHtue5exAiq7D0U9-RfV29A
 
 Original Dataset File:
  * `spotify_million_playlist_dataset.zip` - Contains the JSON slices for the original playlist dataset.
+ 
 Database files from 1st attempt:
  * `song_dataset.db` - Contains music characteristic feature values for each individual song in the dataset.
  * `title_dataset.db` - Contains average and std deviation values formusic characteristic feature for each playlist in the datset.
+ 
 Database files from 2nd attempt:
  * `playlist_song.db` - Contains playlists and their individual songs.
  
