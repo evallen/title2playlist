@@ -44,7 +44,18 @@ Create a playlist from just a title!
    ```
    python main.py
    ```
+## Dataset files
+The folder linked below contains all of the database and dataset files used during this project.
+Link: [here](https://drive.google.com/drive/folders/1HyYqdHtue5exAiq7D0U9-RfV29Af1qI5?usp=share_link)
 
+Original Dataset File:
+ * `spotify_million_playlist_dataset.zip` - Contains the JSON slices for the original playlist dataset.
+Database files from 1st attempt:
+ * `song_dataset.db` - Contains music characteristic feature values for each individual song in the dataset.
+ * `title_dataset.db` - Contains average and std deviation values formusic characteristic feature for each playlist in the datset.
+Database files from 2nd attempt:
+ * `playlist_song.db` - Contains playlists and their individual songs.
+ 
 ## Other files
 
 This repository also contains some extra scripts from our previous
