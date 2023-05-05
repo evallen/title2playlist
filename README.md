@@ -46,7 +46,8 @@ Create a playlist from just a title!
    ```
 ## Dataset files
 The folder linked below contains all of the database and dataset files used during this project.
-Link: [here](https://drive.google.com/drive/folders/1HyYqdHtue5exAiq7D0U9-RfV29Af1qI5?usp=share_link)
+
+Link: [Folder Link](https://drive.google.com/drive/folders/1HyYqdHtue5exAiq7D0U9-RfV29Af1qI5?usp=share_link)
 
 Original Dataset File:
  * `spotify_million_playlist_dataset.zip` - Contains the JSON slices for the original playlist dataset.
