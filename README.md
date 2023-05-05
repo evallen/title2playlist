@@ -50,7 +50,7 @@ The folder linked below contains all of the database and dataset files used duri
 Link: [Folder Link](https://drive.google.com/drive/folders/1HyYqdHtue5exAiq7D0U9-RfV29Af1qI5?usp=share_link)
 
 Original Dataset File:
- * `spotify_million_playlist_dataset.zip` - Contains the JSON slices for the original playlist dataset.
+ * `spotify_million_playlist_dataset.zip` - Contains the JSON slices for the original playlist dataset. JSON slices are located within the data folder of this zip file.
  
 Database files from 1st attempt:
  * `song_dataset.db` - Contains music characteristic feature values for each individual song in the dataset.
